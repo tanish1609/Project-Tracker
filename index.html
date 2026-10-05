@@ -3,82 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Tracker</title>
+  <title>Project Tracker | Agile Kanban Workspace</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <header class="app-header">
-    <h1>Project Tracker</h1>
-    <p>A Kanban board to manage personal, college, and freelance workloads</p>
+  <!-- Top App Navigation -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="logo-icon">&#9638;</div>
+      <div>
+        <h1>Project Tracker</h1>
+        <p>Personal, Academic & Client Workflows</p>
+      </div>
+    </div>
+
+    <!-- Quick Stats Bar (Tier 3) -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-pill"><span class="stat-num" id="stat-total">0</span> Total</div>
+      <div class="stat-pill"><span class="stat-num" id="stat-backlog">0</span> Backlog</div>
+      <div class="stat-pill"><span class="stat-num" id="stat-in-progress">0</span> In Progress</div>
+      <div class="stat-pill"><span class="stat-num" id="stat-review">0</span> Review</div>
+      <div class="stat-pill"><span class="stat-num" id="stat-completed">0</span> Done</div>
+    </div>
+
+    <!-- Tier 4: Dark Mode Toggle -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle Theme" aria-label="Toggle theme">
+      <span class="theme-icon" id="theme-icon">&#9790;</span>
+    </button>
   </header>
 
-  <main class="board-container">
-    <!-- Backlog Column -->
-    <section class="column" id="col-backlog">
-      <div class="column-header">
-        <h2>Backlog</h2>
-        <span class="column-badge">1</span>
+  <!-- Interactive Controls Bar -->
+  <section class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search-input" placeholder="Search projects by name..." autocomplete="off" />
+    </div>
+
+    <form id="add-project-form" class="project-form">
+      <input type="text" id="project-title" placeholder="Project name..." required />
+      
+      <select id="project-category">
+        <option value="Web">Web</option>
+        <option value="Design">Design</option>
+        <option value="Hardware">Hardware</option>
+        <option value="Research">Research</option>
+      </select>
+
+      <select id="project-status">
+        <option value="Backlog">Backlog</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Review">Review</option>
+        <option value="Completed">Completed</option>
+      </select>
+
+      <input type="text" id="project-notes" placeholder="Notes (optional)..." />
+
+      <button type="submit" class="btn-create">+ Add Project</button>
+    </form>
+  </section>
+
+  <!-- Kanban Board Grid -->
+  <main class="board-grid">
+    <!-- Backlog -->
+    <section class="kanban-lane" data-stage="Backlog">
+      <div class="lane-header">
+        <div class="lane-title">
+          <span class="dot dot-backlog"></span>
+          <h2>Backlog</h2>
+        </div>
+        <span class="badge" id="badge-backlog">0</span>
       </div>
-      <div class="cards-container">
-        <article class="card">
-          <div class="card-header">
-            <span class="tag tag-design">Design</span>
-          </div>
-          <h3 class="card-title">Poster for Tech Fest</h3>
-          <p class="card-notes text-muted italic">No notes added</p>
-        </article>
-      </div>
+      <div class="lane-dropzone" id="cards-backlog"></div>
     </section>
 
-    <!-- In Progress Column -->
-    <section class="column" id="col-progress">
-      <div class="column-header">
-        <h2>In Progress</h2>
-        <span class="column-badge">1</span>
+    <!-- In Progress -->
+    <section class="kanban-lane" data-stage="In Progress">
+      <div class="lane-header">
+        <div class="lane-title">
+          <span class="dot dot-progress"></span>
+          <h2>In Progress</h2>
+        </div>
+        <span class="badge" id="badge-in-progress">0</span>
       </div>
-      <div class="cards-container">
-        <article class="card">
-          <div class="card-header">
-            <span class="tag tag-web">Web</span>
-          </div>
-          <h3 class="card-title">Portfolio Website</h3>
-          <p class="card-notes">Homepage layout done, working on projects section</p>
-        </article>
-      </div>
+      <div class="lane-dropzone" id="cards-in-progress"></div>
     </section>
 
-    <!-- Review Column -->
-    <section class="column" id="col-review">
-      <div class="column-header">
-        <h2>Review</h2>
-        <span class="column-badge">1</span>
+    <!-- Review -->
+    <section class="kanban-lane" data-stage="Review">
+      <div class="lane-header">
+        <div class="lane-title">
+          <span class="dot dot-review"></span>
+          <h2>Review</h2>
+        </div>
+        <span class="badge" id="badge-review">0</span>
       </div>
-      <div class="cards-container">
-        <article class="card">
-          <div class="card-header">
-            <span class="tag tag-hardware">Hardware</span>
-          </div>
-          <h3 class="card-title">IoT Weather Station</h3>
-          <p class="card-notes">Sensor calibration pending</p>
-        </article>
-      </div>
+      <div class="lane-dropzone" id="cards-review"></div>
     </section>
 
-    <!-- Completed Column -->
-    <section class="column" id="col-completed">
-      <div class="column-header">
-        <h2>Completed</h2>
-        <span class="column-badge">0</span>
+    <!-- Completed -->
+    <section class="kanban-lane" data-stage="Completed">
+      <div class="lane-header">
+        <div class="lane-title">
+          <span class="dot dot-completed"></span>
+          <h2>Completed</h2>
+        </div>
+        <span class="badge" id="badge-completed">0</span>
       </div>
-      <div class="cards-container">
-        <div class="empty-placeholder">No projects yet</div>
-      </div>
+      <div class="lane-dropzone" id="cards-completed"></div>
     </section>
   </main>
 
+  <script src="script.js"></script>
 </body>
 </html>
