@@ -1,5 +1,5 @@
-// Initial seed data from the task specification[cite: 2]
-const defaultProjects = [
+// Seed Data provided by specification[cite: 2]
+const seedData = [
   {
     id: 1,
     project: "Portfolio Website",
@@ -23,84 +23,150 @@ const defaultProjects = [
   }
 ];
 
-// Tier 3: Load from localStorage or fall back to seed data[cite: 2]
-let projects = JSON.parse(localStorage.getItem("kanban_projects")) || defaultProjects;
+const STAGES = ["Backlog", "In Progress", "Review", "Completed"];
 
-const stages = ["Backlog", "In Progress", "Review", "Completed"]; //
+// Tier 3: LocalStorage persistence[cite: 2]
+let projects = JSON.parse(localStorage.getItem("kanban_app_projects")) || seedData;
 
-// DOM Elements
+// DOM Selectors
 const form = document.getElementById("add-project-form");
 const searchInput = document.getElementById("search-input");
+const themeToggleBtn = document.getElementById("theme-toggle");
+const themeIcon = document.getElementById("theme-icon");
 
-// Save state to localStorage[cite: 2]
-function saveProjects() {
-  localStorage.setItem("kanban_projects", JSON.stringify(projects));
+// State persistence
+function persistState() {
+  localStorage.setItem("kanban_app_projects", JSON.stringify(projects));
 }
 
-// Render cards into appropriate columns
-function renderBoard(filterQuery = "") {
-  // Clear columns and reset counters
-  stages.forEach(stage => {
+// Tier 4: Dark Mode initialization & handler[cite: 2]
+function initTheme() {
+  const isDark = localStorage.getItem("kanban_theme") === "dark";
+  if (isDark) {
+    document.body.classList.add("dark-mode");
+    themeIcon.innerHTML = "&#9788;"; // Sun icon
+  } else {
+    document.body.classList.remove("dark-mode");
+    themeIcon.innerHTML = "&#9790;"; // Moon icon
+  }
+}
+
+themeToggleBtn.addEventListener("click", () => {
+  const isDark = document.body.classList.toggle("dark-mode");
+  themeIcon.innerHTML = isDark ? "&#9788;" : "&#9790;";
+  localStorage.setItem("kanban_theme", isDark ? "dark" : "light");
+});
+
+// Tier 3: Update Header Statistics Summary[cite: 2]
+function updateStats() {
+  document.getElementById("stat-total").textContent = projects.length;
+  STAGES.forEach(stage => {
     const slug = stage.toLowerCase().replace(/\s+/g, "-");
-    const container = document.getElementById(`cards-${slug}`);
+    const count = projects.filter(p => p.status === stage).length;
+    const statElem = document.getElementById(`stat-${slug}`);
+    if (statElem) statElem.textContent = count;
+  });
+}
+
+// Render Board Engine
+function renderBoard(filterQuery = "") {
+  // Clear lanes
+  STAGES.forEach(stage => {
+    const slug = stage.toLowerCase().replace(/\s+/g, "-");
+    const lane = document.getElementById(`cards-${slug}`);
     const badge = document.getElementById(`badge-${slug}`);
-    if (container) container.innerHTML = "";
+    if (lane) lane.innerHTML = "";
     if (badge) badge.textContent = "0";
   });
 
-  // Filter projects by search term (Tier 2)[cite: 2]
-  const filtered = projects.filter(p =>
-    p.project.toLowerCase().includes(filterQuery.toLowerCase())
-  );
+  const query = filterQuery.toLowerCase().trim();
+  const visibleProjects = projects.filter(p => p.project.toLowerCase().includes(query));
 
-  // Group and render projects
-  stages.forEach(stage => {
+  STAGES.forEach(stage => {
     const slug = stage.toLowerCase().replace(/\s+/g, "-");
-    const container = document.getElementById(`cards-${slug}`);
+    const dropzone = document.getElementById(`cards-${slug}`);
     const badge = document.getElementById(`badge-${slug}`);
-    const stageProjects = filtered.filter(p => p.status === stage);
+    const stageItems = visibleProjects.filter(p => p.status === stage);
 
-    if (badge) badge.textContent = stageProjects.length;
+    if (badge) badge.textContent = stageItems.length;
 
-    // Tier 1: Empty state placeholder[cite: 2]
-    if (stageProjects.length === 0) {
-      const emptyDiv = document.createElement("div");
-      emptyDiv.className = "empty-placeholder";
-      emptyDiv.textContent = filterQuery ? "No matching projects" : "No projects yet";
-      container.appendChild(emptyDiv);
+    // Tier 1: Empty state message[cite: 2]
+    if (stageItems.length === 0) {
+      const placeholder = document.createElement("div");
+      placeholder.className = "empty-placeholder";
+      placeholder.textContent = query ? "No matching projects" : "No projects yet";
+      dropzone.appendChild(placeholder);
       return;
     }
 
-    stageProjects.forEach(item => {
+    stageItems.forEach(item => {
       const card = document.createElement("article");
       card.className = "card";
+      card.draggable = true; // Tier 3: Drag & Drop[cite: 2]
+      card.dataset.id = item.id;
 
-      // Tag styling class
       const tagClass = `tag-${item.category.toLowerCase()}`;
-      const notesText = item.notes ? item.notes : "No notes added";
-      const notesClass = item.notes ? "card-notes" : "card-notes text-muted italic";
+      const noteClass = item.notes ? "card-notes" : "card-notes empty-note";
+      const noteText = item.notes ? item.notes : "No notes added yet";
 
-      // Determine next stage
-      const currentIndex = stages.indexOf(item.status);
-      const hasNextStage = currentIndex < stages.length - 1;
-      const nextStageName = hasNextStage ? stages[currentIndex + 1] : null;
+      const currentStageIndex = STAGES.indexOf(item.status);
+      const nextStage = currentStageIndex < STAGES.length - 1 ? STAGES[currentStageIndex + 1] : null;
 
       card.innerHTML = `
-        <div class="card-header">
+        <div class="card-top">
           <span class="tag ${tagClass}">${item.category}</span>
-          <button class="btn-delete" title="Delete Project" onclick="deleteProject(${item.id})">&times;</button>
+          <button class="btn-icon-del" onclick="deleteCard(${item.id})" title="Delete card">&times;</button>
         </div>
         <h3 class="card-title">${escapeHtml(item.project)}</h3>
-        <p class="${notesClass}">${escapeHtml(notesText)}</p>
-        <div class="card-actions">
-          ${hasNextStage ? `<button class="btn-move" onclick="moveProject(${item.id})">Move &rarr; ${nextStageName}</button>` : `<span class="completed-text">&#10003; Done</span>`}
+        <p class="${noteClass}">${escapeHtml(noteText)}</p>
+        <div class="card-footer">
+          ${nextStage ? `<button class="btn-step" onclick="advanceCard(${item.id})">Move &rarr; ${nextStage}</button>` : `<span class="done-badge">&#10003; Completed</span>`}
         </div>
       `;
 
-      container.appendChild(card);
+      // HTML5 Drag and Drop events (Tier 3)[cite: 2]
+      card.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", item.id);
+        card.classList.add("dragging");
+      });
+
+      card.addEventListener("dragend", () => {
+        card.classList.remove("dragging");
+      });
+
+      dropzone.appendChild(card);
     });
   });
+
+  updateStats();
 }
+
+// Tier 3: HTML5 Native Drag & Drop Handlers[cite: 2]
+document.querySelectorAll(".lane-dropzone").forEach(dropzone => {
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("drag-hover");
+  });
+
+  dropzone.addEventListener("dragleave", () => {
+    dropzone.classList.remove("drag-hover");
+  });
+
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("drag-hover");
+
+    const cardId = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    const targetStage = dropzone.closest(".kanban-lane").dataset.stage;
+
+    const item = projects.find(p => p.id === cardId);
+    if (item && item.status !== targetStage) {
+      item.status = targetStage;
+      persistState();
+      renderBoard(searchInput.value);
+    }
+  });
+});
 
 // Tier 1: Add Project[cite: 2]
 form.addEventListener("submit", (e) => {
@@ -121,43 +187,52 @@ form.addEventListener("submit", (e) => {
     notes
   };
 
-  projects.push(newProject);
-  saveProjects();
+  projects.unshift(newProject);
+  persistState();
   renderBoard(searchInput.value);
   form.reset();
 });
 
-// Tier 1: Delete Card[cite: 2]
-window.deleteProject = function(id) {
+// Tier 1: Delete Project[cite: 2]
+window.deleteCard = function(id) {
   projects = projects.filter(p => p.id !== id);
-  saveProjects();
+  persistState();
   renderBoard(searchInput.value);
 };
 
-// Tier 2: Move to Next Stage[cite: 2]
-window.moveProject = function(id) {
-  const target = projects.find(p => p.id === id);
-  if (!target) return;
+// Tier 2: Step to next stage[cite: 2]
+window.advanceCard = function(id) {
+  const item = projects.find(p => p.id === id);
+  if (!item) return;
 
-  const currentIndex = stages.indexOf(target.status);
-  if (currentIndex < stages.length - 1) {
-    target.status = stages[currentIndex + 1];
-    saveProjects();
+  const currentIndex = STAGES.indexOf(item.status);
+  if (currentIndex < STAGES.length - 1) {
+    item.status = STAGES[currentIndex + 1];
+    persistState();
     renderBoard(searchInput.value);
   }
 };
 
-// Tier 2: Search Bar[cite: 2]
+// Tier 2: Search input filtering[cite: 2]
 searchInput.addEventListener("input", (e) => {
   renderBoard(e.target.value);
 });
 
-// Helper: Escape text to prevent XSS
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.innerText = text;
-  return div.innerHTML;
+// Tier 4: Cross-tab board synchronization[cite: 2]
+window.addEventListener("storage", (e) => {
+  if (e.key === "kanban_app_projects") {
+    projects = JSON.parse(e.newValue) || [];
+    renderBoard(searchInput.value);
+  }
+});
+
+// Utility: Prevent HTML injection
+function escapeHtml(str) {
+  const p = document.createElement("p");
+  p.innerText = str;
+  return p.innerHTML;
 }
 
-// Initial board render on load
+// App Kickoff
+initTheme();
 renderBoard();
