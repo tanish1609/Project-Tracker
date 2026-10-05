@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>Project Tracker</h1>
+    <p>A Kanban board to manage personal, college, and freelance workloads</p>
+  </header>
+
+  <main class="board-container">
+    <!-- Backlog Column -->
+    <section class="column" id="col-backlog">
+      <div class="column-header">
+        <h2>Backlog</h2>
+        <span class="column-badge">1</span>
+      </div>
+      <div class="cards-container">
+        <article class="card">
+          <div class="card-header">
+            <span class="tag tag-design">Design</span>
+          </div>
+          <h3 class="card-title">Poster for Tech Fest</h3>
+          <p class="card-notes text-muted italic">No notes added</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- In Progress Column -->
+    <section class="column" id="col-progress">
+      <div class="column-header">
+        <h2>In Progress</h2>
+        <span class="column-badge">1</span>
+      </div>
+      <div class="cards-container">
+        <article class="card">
+          <div class="card-header">
+            <span class="tag tag-web">Web</span>
+          </div>
+          <h3 class="card-title">Portfolio Website</h3>
+          <p class="card-notes">Homepage layout done, working on projects section</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Review Column -->
+    <section class="column" id="col-review">
+      <div class="column-header">
+        <h2>Review</h2>
+        <span class="column-badge">1</span>
+      </div>
+      <div class="cards-container">
+        <article class="card">
+          <div class="card-header">
+            <span class="tag tag-hardware">Hardware</span>
+          </div>
+          <h3 class="card-title">IoT Weather Station</h3>
+          <p class="card-notes">Sensor calibration pending</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Completed Column -->
+    <section class="column" id="col-completed">
+      <div class="column-header">
+        <h2>Completed</h2>
+        <span class="column-badge">0</span>
+      </div>
+      <div class="cards-container">
+        <div class="empty-placeholder">No projects yet</div>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>
